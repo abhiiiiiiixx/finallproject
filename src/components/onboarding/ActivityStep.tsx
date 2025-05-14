@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarbellIcon, ClockIcon, HeartIcon } from "lucide-react";
+import { Dumbbell, Clock, Heart } from "lucide-react";
 
 const activitySchema = z.object({
   activityStatus: z.enum(["student", "professional", "other"]),
@@ -101,7 +101,7 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
 
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <ClockIcon className="h-5 w-5 text-fitness-primary" />
+            <Clock className="h-5 w-5 text-fitness-primary" />
             <Label htmlFor="workingHours">How many hours do you work/study daily?</Label>
           </div>
           <Controller
@@ -129,7 +129,7 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
 
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <BarbellIcon className="h-5 w-5 text-fitness-secondary" />
+            <Dumbbell className="h-5 w-5 text-fitness-secondary" />
             <Label htmlFor="workoutDuration">How long do you typically exercise?</Label>
           </div>
           <Controller
@@ -157,7 +157,7 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
 
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <HeartIcon className="h-5 w-5 text-fitness-accent" />
+            <Heart className="h-5 w-5 text-fitness-accent" />
             <Label>How intense are your workouts?</Label>
           </div>
           <div className="space-y-6 pt-2">
