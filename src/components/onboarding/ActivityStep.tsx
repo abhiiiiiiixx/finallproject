@@ -1,4 +1,3 @@
-
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,7 +27,7 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isValid },
     watch,
   } = useForm<ActivityFormValues>({
     resolver: zodResolver(activitySchema),
@@ -38,6 +37,7 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
       workoutDuration: defaultValues?.workoutDuration || "30-60",
       workoutIntensity: defaultValues?.workoutIntensity || 3,
     },
+    mode: "onChange", // Enable validation on change
   });
 
   // Watch form values to update parent component
@@ -45,8 +45,9 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
   
   // Update parent component when form values change
   const handleFormChange = () => {
-    const isValid = !errors.activityStatus && !errors.workingHours && !errors.workoutDuration && !errors.workoutIntensity;
-    if (isValid) {
+    // Check if all required fields are filled
+    if (formValues.activityStatus && formValues.workingHours && 
+        formValues.workoutDuration && formValues.workoutIntensity) {
       onDataChange(formValues);
     }
   };
@@ -66,7 +67,10 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
             control={control}
             render={({ field }) => (
               <RadioGroup
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  handleFormChange();
+                }}
                 defaultValue={field.value}
                 className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2"
               >
@@ -108,7 +112,13 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
             name="workingHours"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select 
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  handleFormChange();
+                }} 
+                defaultValue={field.value}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select hours" />
                 </SelectTrigger>
@@ -136,7 +146,13 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
             name="workoutDuration"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select 
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  handleFormChange();
+                }} 
+                defaultValue={field.value}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
@@ -171,7 +187,10 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
                     max={5}
                     min={1}
                     step={1}
-                    onValueChange={(vals) => onChange(vals[0])}
+                    onValueChange={(vals) => {
+                      onChange(vals[0]);
+                      handleFormChange();
+                    }}
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Light activity<br/>(Easy walking)</span>
