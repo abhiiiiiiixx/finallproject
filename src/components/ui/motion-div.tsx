@@ -3,11 +3,8 @@
 
 import { HTMLMotionProps, motion } from "framer-motion";
 import { forwardRef } from "react";
-import type { VariantProps } from "class-variance-authority";
 
-interface MotionDivProps
-  extends HTMLMotionProps<"div">,
-    VariantProps<() => string> {
+interface MotionDivProps extends HTMLMotionProps<"div"> {
   children: React.ReactNode;
 }
 
