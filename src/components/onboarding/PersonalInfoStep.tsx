@@ -40,16 +40,22 @@ const PersonalInfoStep = ({ onDataChange, defaultValues }: PersonalInfoStepProps
   // Watch form values to update parent component
   const formValues = watch();
   
+  // Watch for form value changes and update parent
+  useEffect(() => {
+    if (formValues) {
+      handleFormChange();
+    }
+  }, [formValues.fullName, formValues.gender]);
+  
   // Set initial data on component mount
   useEffect(() => {
     // Always pass default values to parent component
     const defaultData = {
-      fullName: "",
-      gender: "male",
-      ...defaultValues
+      fullName: defaultValues?.fullName || "",
+      gender: defaultValues?.gender || "male",
     };
     onDataChange(defaultData);
-  }, []);
+  }, [defaultValues, onDataChange]);
   
   // Update parent component when form values change
   const handleFormChange = () => {
@@ -80,6 +86,7 @@ const PersonalInfoStep = ({ onDataChange, defaultValues }: PersonalInfoStepProps
             placeholder="Your full name"
             {...register("fullName", {
               onChange: (e) => {
+                console.log("Name input changed:", e.target.value);
                 handleFormChange();
               }
             })}

@@ -19,7 +19,6 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   const navigationItems = [
     { name: "Home", icon: <HomeIcon className="w-5 h-5" />, href: "/dashboard", id: "home" },
     { name: "Diet Plan", icon: <UtensilsIcon className="w-5 h-5" />, href: "/diet-plan", id: "diet" },
-    { name: "Profile", icon: <UserIcon className="w-5 h-5" />, href: "/profile", id: "profile" },
   ];
 
   const handleNavigation = (path: string) => (e: React.MouseEvent) => {
@@ -67,22 +66,6 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
           
           <div className="mb-6 px-4 mt-auto">
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-1">
-              <a
-                href="/settings"
-                onClick={handleNavigation("/settings")}
-                className="group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <Settings className="mr-3 h-5 w-5" />
-                Settings
-              </a>
-              <a
-                href="/logout"
-                onClick={handleNavigation("/logout")}
-                className="group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <LogOutIcon className="mr-3 h-5 w-5" />
-                Logout
-              </a>
             </div>
           </div>
         </div>

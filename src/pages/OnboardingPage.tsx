@@ -12,7 +12,10 @@ const OnboardingPage = () => {
   const totalSteps = 4;
   
   const [userData, setUserData] = useState({
-    personalInfo: null,
+    personalInfo: {
+      fullName: "",
+      gender: "male"
+    },
     activityInfo: null,
     dietGoals: null
   });

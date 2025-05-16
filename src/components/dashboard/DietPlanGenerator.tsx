@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RefreshCcwIcon, Share2, Download } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RefreshCcwIcon, Share2, Download, CheckCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { FoodItem, getRandomFoodItems } from "@/lib/foodDatabase";
 import { useDietPreference } from "@/lib/DietPreferenceContext";
+import { useTokens } from "@/lib/TokenContext";
 
 // Example meal data - in real app would be generated based on user preferences
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -75,6 +76,7 @@ const allPlans: Record<string, WeeklyMealPlan> = (() => {
 const DietPlanGenerator = () => {
   // Use the context instead of local state
   const { dietPreference, healthGoal } = useDietPreference();
+  const { completedDays, completedMeals, markDayAsCompleted, markMealAsCompleted } = useTokens();
   const [activeDay, setActiveDay] = useState("Monday");
   const [planVersion, setPlanVersion] = useState(0); // Use a version number to force re-render when plan changes
 
@@ -83,6 +85,47 @@ const DietPlanGenerator = () => {
     const key = `${dietPreference}-${healthGoal}`;
     return allPlans[key];
   }, [dietPreference, healthGoal, planVersion]);
+
+  // Get the current week key for completed days tracking
+  const getCurrentWeekKey = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const oneJan = new Date(year, 0, 1);
+    const weekNumber = Math.ceil(((now.getTime() - oneJan.getTime()) / 86400000 + oneJan.getDay() + 1) / 7);
+    return `${year}-W${weekNumber}`;
+  };
+
+  // Check if a day is completed
+  const isDayCompleted = (day: string) => {
+    const weekKey = getCurrentWeekKey();
+    const dayKey = `${weekKey}-${day}`;
+    return completedDays[dayKey] || false;
+  };
+
+  // Check if a meal is completed
+  const isMealCompleted = (day: string, mealType: string) => {
+    const weekKey = getCurrentWeekKey();
+    const mealKey = `${weekKey}-${day}-${mealType}`;
+    return completedMeals[mealKey] || false;
+  };
+
+  // Handle marking a day as completed
+  const handleMarkAsCompleted = (day: string) => {
+    markDayAsCompleted(day);
+    toast({
+      title: "Day Completed!",
+      description: `You've earned a token for completing ${day}'s diet plan.`
+    });
+  };
+
+  // Handle marking a meal as completed
+  const handleMarkMealAsCompleted = (day: string, mealType: string) => {
+    markMealAsCompleted(day, mealType);
+    toast({
+      title: "Meal Completed!",
+      description: `You've earned 0.1 tokens for completing this meal.`
+    });
+  };
 
   const handleRegeneratePlan = () => {
     // Generate a fresh plan
@@ -130,32 +173,57 @@ const DietPlanGenerator = () => {
     );
   };
 
-  const MealCard = ({ meal, title }: { meal: MealOption; title: string }) => {
+  const MealCard = ({ meal, title, day }: { meal: MealOption; title: string; day: string }) => {
+    const mealType = title.toLowerCase().replace(' ', '');
+    const isCompleted = isMealCompleted(day, mealType);
+    
     return (
-      <Card className="h-full">
+      <Card className="h-full relative">
+        {isCompleted && (
+          <span className="absolute -top-1 -right-1 z-10">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+          </span>
+        )}
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
         </CardHeader>
-        <CardContent className="pb-4">
+        <CardContent className="pb-2">
           <div className="space-y-2">
             <div className="font-medium">{meal.name}</div>
             <p className="text-sm text-muted-foreground">{meal.description}</p>
             <div className="flex flex-wrap gap-2 mt-2">
               <div className="text-xs px-2 py-1 bg-fitness-primary/10 text-fitness-primary rounded-full">
                 {meal.calories} cal
-          </div>
+              </div>
               <div className="text-xs px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-full">
                 P: {meal.protein}g
-            </div>
+              </div>
               <div className="text-xs px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 rounded-full">
                 C: {meal.carbs}g
-            </div>
+              </div>
               <div className="text-xs px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded-full">
                 F: {meal.fat}g
-            </div>
+              </div>
             </div>
           </div>
         </CardContent>
+        <CardFooter>
+          {!isCompleted ? (
+            <Button 
+              size="sm"
+              variant="outline" 
+              className="w-full bg-green-500 hover:bg-green-600 text-white"
+              onClick={() => handleMarkMealAsCompleted(day, mealType)}
+            >
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Complete
+            </Button>
+          ) : (
+            <div className="w-full text-center text-green-500 text-xs font-medium">
+              Completed
+            </div>
+          )}
+        </CardFooter>
       </Card>
     );
   };
@@ -196,10 +264,10 @@ const DietPlanGenerator = () => {
                 <RefreshCcwIcon className="h-4 w-4 mr-2" />
                 Regenerate
               </Button>
-              <Button onClick={handleSharePlan} variant="outline" size="sm">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
+              {/* <Button onClick={handleSharePlan} variant="outline" size="sm"> */}
+                {/* <Share2 className="h-4 w-4 mr-2" /> */}
+                
+              {/* </Button> */}
               <Button onClick={handleDownloadPlan} variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
                 Download
@@ -210,8 +278,13 @@ const DietPlanGenerator = () => {
           <Tabs defaultValue={activeDay} onValueChange={setActiveDay} className="mb-8">
             <TabsList className="grid grid-cols-7 mb-6">
               {DAYS_OF_WEEK.map((day) => (
-                <TabsTrigger key={day} value={day}>
+                <TabsTrigger key={day} value={day} className="relative">
                   {day}
+                  {isDayCompleted(day) && (
+                    <span className="absolute -top-1 -right-1">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    </span>
+                  )}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -221,8 +294,23 @@ const DietPlanGenerator = () => {
                 {weeklyPlan[day] && (
                   <>
                     <Card className="mb-6">
-                      <CardHeader>
+                      <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle className="text-lg">Daily Summary ({day})</CardTitle>
+                        {!isDayCompleted(day) ? (
+                          <Button 
+                            variant="outline" 
+                            className="bg-green-500 hover:bg-green-600 text-white"
+                            onClick={() => handleMarkAsCompleted(day)}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Mark All as Completed
+                          </Button>
+                        ) : (
+                          <div className="flex items-center text-green-500 text-sm font-medium">
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Completed
+                          </div>
+                        )}
                       </CardHeader>
                       <CardContent>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -247,11 +335,11 @@ const DietPlanGenerator = () => {
                     </Card>
 
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                      <MealCard meal={weeklyPlan[day].breakfast} title="Breakfast" />
-                      <MealCard meal={weeklyPlan[day].morningSnack} title="Morning Snack" />
-                      <MealCard meal={weeklyPlan[day].lunch} title="Lunch" />
-                      <MealCard meal={weeklyPlan[day].afternoonSnack} title="Afternoon Snack" />
-                      <MealCard meal={weeklyPlan[day].dinner} title="Dinner" />
+                      <MealCard meal={weeklyPlan[day].breakfast} title="Breakfast" day={day} />
+                      <MealCard meal={weeklyPlan[day].morningSnack} title="MorningSnack" day={day} />
+                      <MealCard meal={weeklyPlan[day].lunch} title="Lunch" day={day} />
+                      <MealCard meal={weeklyPlan[day].afternoonSnack} title="AfternoonSnack" day={day} />
+                      <MealCard meal={weeklyPlan[day].dinner} title="Dinner" day={day} />
                     </div>
                   </>
                 )}

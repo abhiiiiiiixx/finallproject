@@ -11,6 +11,23 @@ const CompletionStep = ({ userData }: { userData: any }) => {
     dietGoals_preference: userData.dietGoals?.dietPreference
   });
   
+  // Additional debug to check more specific issues
+  console.log("Name check:", {
+    hasPersonalInfo: Boolean(userData.personalInfo),
+    fullNameValue: userData.personalInfo?.fullName,
+    fullNameType: typeof userData.personalInfo?.fullName,
+    fullNameLength: userData.personalInfo?.fullName?.length,
+    isEmpty: userData.personalInfo?.fullName === "",
+    isUndefined: userData.personalInfo?.fullName === undefined,
+    isNull: userData.personalInfo?.fullName === null,
+  });
+  
+  // Format the weight to consistently show one decimal place
+  const formatWeight = (weight: number | undefined): string => {
+    if (weight === undefined || isNaN(weight)) return "Not provided";
+    return weight.toFixed(1) + " kg";
+  };
+  
   return (
     <div className="flex flex-col items-center justify-center py-8">
       <motion.div
@@ -49,8 +66,12 @@ const CompletionStep = ({ userData }: { userData: any }) => {
         <h3 className="font-semibold mb-4">Your Profile Summary</h3>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Name:</span>
-            <span className="font-medium">{userData.personalInfo?.fullName || "Not provided"}</span>
+            <span className="text-muted-foreground"></span>
+            <span className="font-medium">
+              {/* {userData.personalInfo?.fullName ?  */}
+                {/* userData.personalInfo.fullName :  */}
+                {/* ""} */}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Age:</span>
@@ -65,8 +86,8 @@ const CompletionStep = ({ userData }: { userData: any }) => {
             <span className="font-medium">{userData.dietGoals?.height || "Not provided"} {userData.dietGoals?.height ? "cm" : ""}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Weight:</span>
-            <span className="font-medium">{userData.dietGoals?.weight || "Not provided"} {userData.dietGoals?.weight ? "kg" : ""}</span>
+            <span className="text-muted-foreground"></span>
+            {/* <span className="font-medium">{userData.dietGoals?.weight ? formatWeight(userData.dietGoals.weight) : ""}</span> */}
           </div>
           <div className="flex justify-between">
             {/* <span className="text-muted-foreground">Diet Preference:</span> */}

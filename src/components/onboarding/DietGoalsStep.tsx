@@ -77,7 +77,9 @@ const DietGoalsStep = ({ onDataChange, defaultValues }: DietGoalsStepProps) => {
       // BMI formula: weight(kg) / (height(m) * height(m))
       // Assuming height is in cm, convert to meters
       const heightInMeters = height / 100;
-      const bmiValue = weight / (heightInMeters * heightInMeters);
+      // Format weight for consistent calculation
+      const formattedWeight = formatWeight(weight);
+      const bmiValue = formattedWeight / (heightInMeters * heightInMeters);
       const roundedBmi = parseFloat(bmiValue.toFixed(1));
       console.log("Calculated BMI:", roundedBmi); // Debug log
       setBmi(roundedBmi);
@@ -155,7 +157,9 @@ const DietGoalsStep = ({ onDataChange, defaultValues }: DietGoalsStepProps) => {
   const calculateBMI = () => {
     if (height && weight && !isNaN(height) && !isNaN(weight) && height > 0 && weight > 0) {
       const heightInMeters = height / 100;
-      const bmiValue = weight / (heightInMeters * heightInMeters);
+      // Format weight for consistent calculation
+      const formattedWeight = formatWeight(weight);
+      const bmiValue = formattedWeight / (heightInMeters * heightInMeters);
       const roundedBmi = parseFloat(bmiValue.toFixed(1));
       setBmi(roundedBmi);
       
@@ -170,6 +174,13 @@ const DietGoalsStep = ({ onDataChange, defaultValues }: DietGoalsStepProps) => {
         setBmiCategory("Obese");
       }
     }
+  };
+
+  // Format weight to always have consistent decimal places
+  const formatWeight = (value: number | undefined): number | undefined => {
+    if (value === undefined || isNaN(value)) return undefined;
+    // Format to 1 decimal place
+    return parseFloat(value.toFixed(1));
   };
 
   return (
@@ -237,13 +248,26 @@ const DietGoalsStep = ({ onDataChange, defaultValues }: DietGoalsStepProps) => {
                   id="weight"
                   type="number"
                   min="1"
+                  step="0.1"
                   placeholder="Enter your weight in kg"
                   {...register("weight", { 
                     valueAsNumber: true,
                     onChange: (e) => {
-                      const val = parseFloat(e.target.value);
-                      if (!isNaN(val) && val > 0) {
-                        setValue("weight", val, { shouldValidate: true });
+                      // Get input value
+                      const inputValue = e.target.value;
+                      
+                      // Handle empty input
+                      if (inputValue === '') {
+                        setValue("weight", undefined, { shouldValidate: true });
+                        handleFormChange();
+                        return;
+                      }
+                      
+                      // Parse the value and format to 1 decimal place
+                      const parsedValue = parseFloat(inputValue);
+                      if (!isNaN(parsedValue) && parsedValue > 0) {
+                        const formattedValue = formatWeight(parsedValue);
+                        setValue("weight", formattedValue, { shouldValidate: true });
                         handleFormChange();
                       }
                     }
