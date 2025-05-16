@@ -1,4 +1,3 @@
-
 import { useRef } from "react";
 import { MotionDiv } from "@/components/ui/motion-div";
 import { motion, useInView } from "framer-motion";
@@ -39,7 +38,7 @@ const HowItWorks = () => {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section className="py-20 lg:py-32 bg-gray-50 dark:bg-gray-800 relative overflow-hidden">
+    <section id="plans" className="py-20 lg:py-32 bg-gray-50 dark:bg-gray-800 relative overflow-hidden">
       {/* Background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
         <div className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-fitness-primary/5 filter blur-3xl"></div>

@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import PersonalInfoStep from "@/components/onboarding/PersonalInfoStep";
@@ -17,6 +16,11 @@ const OnboardingPage = () => {
     activityInfo: null,
     dietGoals: null
   });
+
+  // Debug userData changes
+  useEffect(() => {
+    console.log("userData updated:", userData);
+  }, [userData]);
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -36,28 +40,22 @@ const OnboardingPage = () => {
   };
 
   const updatePersonalInfo = (data) => {
+    console.log("Personal info updated with:", data);
     setUserData({ ...userData, personalInfo: data });
   };
 
   const updateActivityInfo = (data) => {
+    console.log("Activity info updated with:", data);
     setUserData({ ...userData, activityInfo: data });
   };
   
   const updateDietGoals = (data) => {
+    console.log("Diet goals updated with:", data);
     setUserData({ ...userData, dietGoals: data });
   };
   
   const isNextDisabled = () => {
-    switch (currentStep) {
-      case 1:
-        return !userData.personalInfo;
-      case 2:
-        return !userData.activityInfo;
-      case 3:
-        return !userData.dietGoals;
-      default:
-        return false;
-    }
+    return false;
   };
 
   return (

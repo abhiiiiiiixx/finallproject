@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -58,7 +57,7 @@ const Footer = () => {
               <li><Link to="#" className="text-gray-600 dark:text-gray-300 hover:text-fitness-primary">Privacy Policy</Link></li>
               <li><Link to="#" className="text-gray-600 dark:text-gray-300 hover:text-fitness-primary">Terms of Service</Link></li>
               <li><Link to="#" className="text-gray-600 dark:text-gray-300 hover:text-fitness-primary">Cookie Policy</Link></li>
-              <li><Link to="#" className="text-gray-600 dark:text-gray-300 hover:text-fitness-primary">FAQs</Link></li>
+              <li><Link to="#" onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })} className="text-gray-600 dark:text-gray-300 hover:text-fitness-primary">FAQs</Link></li>
             </ul>
           </div>
         </div>

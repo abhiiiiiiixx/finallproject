@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,21 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+// Modified schema to make fields optional
 const personalInfoSchema = z.object({
-  fullName: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  age: z.string().refine((val) => {
-    const num = parseInt(val);
-    return !isNaN(num) && num >= 18 && num <= 100;
-  }, { message: "Age must be between 18 and 100" }),
-  gender: z.enum(["male", "female", "other"]),
-  height: z.string().refine((val) => {
-    const num = parseInt(val);
-    return !isNaN(num) && num >= 100 && num <= 250;
-  }, { message: "Height must be between 100 and 250 cm" }),
-  weight: z.string().refine((val) => {
-    const num = parseInt(val);
-    return !isNaN(num) && num >= 30 && num <= 300;
-  }, { message: "Weight must be between 30 and 300 kg" }),
+  fullName: z.string().min(2, { message: "Name must be at least 2 characters" }).optional(),
+  gender: z.enum(["male", "female", "other"]).optional(),
 });
 
 type PersonalInfoFormValues = z.infer<typeof personalInfoSchema>;
@@ -38,42 +26,63 @@ const PersonalInfoStep = ({ onDataChange, defaultValues }: PersonalInfoStepProps
     control,
     formState: { errors },
     watch,
+    trigger,
+    setValue,
   } = useForm<PersonalInfoFormValues>({
     resolver: zodResolver(personalInfoSchema),
     defaultValues: {
       fullName: defaultValues?.fullName || "",
-      age: defaultValues?.age || "",
       gender: defaultValues?.gender || "male",
-      height: defaultValues?.height || "",
-      weight: defaultValues?.weight || "",
     },
+    mode: "onChange", // Enable validation on change
   });
 
   // Watch form values to update parent component
   const formValues = watch();
   
+  // Set initial data on component mount
+  useEffect(() => {
+    // Always pass default values to parent component
+    const defaultData = {
+      fullName: "",
+      gender: "male",
+      ...defaultValues
+    };
+    onDataChange(defaultData);
+  }, []);
+  
   // Update parent component when form values change
   const handleFormChange = () => {
-    const isValid = !errors.fullName && !errors.age && !errors.gender && !errors.height && !errors.weight;
-    if (isValid) {
-      onDataChange(formValues);
-    }
+    console.log("Form values:", formValues);
+    // Always update with current values, regardless of validation
+    const updatedValues = {
+      ...formValues,
+      // Ensure we always have default values set
+      fullName: formValues.fullName || "",
+      gender: formValues.gender || "male"
+    };
+    onDataChange(updatedValues);
   };
 
   return (
-    <div onChange={handleFormChange} className="space-y-6">
+    <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold mb-2">Tell us about yourself</h2>
-        <p className="text-muted-foreground">We need some basic information to create your personalized plan</p>
+        <p className="text-muted-foreground">Let's start with your name and gender</p>
+        <p className="text-sm text-muted-foreground mt-2">(All fields are optional - default values will be used if skipped)</p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div>
           <Label htmlFor="fullName">Full Name</Label>
           <Input
             id="fullName"
             placeholder="Your full name"
-            {...register("fullName")}
+            {...register("fullName", {
+              onChange: (e) => {
+                handleFormChange();
+              }
+            })}
             className="mt-1"
           />
           {errors.fullName && (
@@ -81,81 +90,41 @@ const PersonalInfoStep = ({ onDataChange, defaultValues }: PersonalInfoStepProps
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="age">Age</Label>
-            <Input
-              id="age"
-              type="number"
-              placeholder="Years"
-              {...register("age")}
-              className="mt-1"
-            />
-            {errors.age && (
-              <p className="text-sm text-red-500 mt-1">{errors.age.message}</p>
+        <div>
+          <Label>Gender</Label>
+          <Controller
+            name="gender"
+            control={control}
+            render={({ field }) => (
+              <RadioGroup
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  handleFormChange();
+                }}
+                value={field.value}
+                className="grid grid-cols-3 gap-4 mt-3"
+              >
+                <div className={`flex flex-col items-center space-y-2 border rounded-lg p-4 hover:border-fitness-primary cursor-pointer ${field.value === 'male' ? 'border-fitness-primary bg-fitness-primary/10' : ''}`}>
+                  <RadioGroupItem value="male" id="male" className="self-start" />
+                  <div className="text-2xl">👨</div>
+                  <Label htmlFor="male" className="cursor-pointer">Male</Label>
+                </div>
+                <div className={`flex flex-col items-center space-y-2 border rounded-lg p-4 hover:border-fitness-primary cursor-pointer ${field.value === 'female' ? 'border-fitness-primary bg-fitness-primary/10' : ''}`}>
+                  <RadioGroupItem value="female" id="female" className="self-start" />
+                  <div className="text-2xl">👩</div>
+                  <Label htmlFor="female" className="cursor-pointer">Female</Label>
+                </div>
+                <div className={`flex flex-col items-center space-y-2 border rounded-lg p-4 hover:border-fitness-primary cursor-pointer ${field.value === 'other' ? 'border-fitness-primary bg-fitness-primary/10' : ''}`}>
+                  <RadioGroupItem value="other" id="other" className="self-start" />
+                  <div className="text-2xl">🧑</div>
+                  <Label htmlFor="other" className="cursor-pointer">Other</Label>
+                </div>
+              </RadioGroup>
             )}
-          </div>
-
-          <div>
-            <Label>Gender</Label>
-            <Controller
-              name="gender"
-              control={control}
-              render={({ field }) => (
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex gap-4 mt-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="male" id="male" />
-                    <Label htmlFor="male">Male</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="female" id="female" />
-                    <Label htmlFor="female">Female</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="other" id="other" />
-                    <Label htmlFor="other">Other</Label>
-                  </div>
-                </RadioGroup>
-              )}
-            />
-            {errors.gender && (
-              <p className="text-sm text-red-500 mt-1">{errors.gender.message}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="height">Height (cm)</Label>
-            <Input
-              id="height"
-              type="number"
-              placeholder="Height in cm"
-              {...register("height")}
-              className="mt-1"
-            />
-            {errors.height && (
-              <p className="text-sm text-red-500 mt-1">{errors.height.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="weight">Weight (kg)</Label>
-            <Input
-              id="weight"
-              type="number"
-              placeholder="Weight in kg"
-              {...register("weight")}
-              className="mt-1"
-            />
-            {errors.weight && (
-              <p className="text-sm text-red-500 mt-1">{errors.weight.message}</p>
-            )}
-          </div>
+          />
+          {errors.gender && (
+            <p className="text-sm text-red-500 mt-1">{errors.gender.message}</p>
+          )}
         </div>
       </div>
     </div>

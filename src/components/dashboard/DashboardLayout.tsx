@@ -1,12 +1,7 @@
-
 import { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  BarChart3,
-  CalendarIcon,
-  Camera,
   HomeIcon,
-  PieChartIcon,
   UserIcon,
   UtensilsIcon,
   LogOutIcon,
@@ -15,16 +10,22 @@ import {
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  activeTab: "home" | "diet" | "progress" | "profile";
+  activeTab: "home" | "diet" | "profile";
 }
 
 const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
+  const navigate = useNavigate();
+
   const navigationItems = [
     { name: "Home", icon: <HomeIcon className="w-5 h-5" />, href: "/dashboard", id: "home" },
     { name: "Diet Plan", icon: <UtensilsIcon className="w-5 h-5" />, href: "/diet-plan", id: "diet" },
-    { name: "Progress", icon: <BarChart3 className="w-5 h-5" />, href: "/progress", id: "progress" },
     { name: "Profile", icon: <UserIcon className="w-5 h-5" />, href: "/profile", id: "profile" },
   ];
+
+  const handleNavigation = (path: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate(path);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
@@ -48,9 +49,10 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
         <div className="flex-1 flex flex-col justify-between">
           <nav className="mt-5 px-4 space-y-1">
             {navigationItems.map((item) => (
-              <Link
+              <a
                 key={item.name}
-                to={item.href}
+                href={item.href}
+                onClick={handleNavigation(item.href)}
                 className={`group flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
                   activeTab === item.id
                     ? "bg-fitness-primary text-white"
@@ -59,37 +61,28 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
               >
                 <div className="mr-3">{item.icon}</div>
                 {item.name}
-              </Link>
+              </a>
             ))}
-
-            {/* Snap food button */}
-            <div className="px-4 py-6">
-              <Link
-                to="/snap-food"
-                className="flex items-center justify-center px-4 py-3 bg-fitness-secondary text-white rounded-lg hover:bg-fitness-secondary/90 transition-colors"
-              >
-                <Camera className="w-4 h-4 mr-2" />
-                <span>Snap Food</span>
-              </Link>
-            </div>
           </nav>
           
           <div className="mb-6 px-4 mt-auto">
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-1">
-              <Link
-                to="/settings"
+              <a
+                href="/settings"
+                onClick={handleNavigation("/settings")}
                 className="group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <Settings className="mr-3 h-5 w-5" />
                 Settings
-              </Link>
-              <Link
-                to="/logout"
+              </a>
+              <a
+                href="/logout"
+                onClick={handleNavigation("/logout")}
                 className="group flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <LogOutIcon className="mr-3 h-5 w-5" />
                 Logout
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -105,9 +98,10 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
         <div className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-2">
           <div className="max-w-md mx-auto px-4 flex justify-between">
             {navigationItems.map((item) => (
-              <Link
+              <a
                 key={item.name}
-                to={item.href}
+                href={item.href}
+                onClick={handleNavigation(item.href)}
                 className={`flex flex-col items-center pt-2 pb-1 ${
                   activeTab === item.id
                     ? "text-fitness-primary"
@@ -116,17 +110,8 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
               >
                 <div className="mb-1">{item.icon}</div>
                 <span className="text-xs">{item.name}</span>
-              </Link>
+              </a>
             ))}
-            <Link
-              to="/snap-food"
-              className="flex flex-col items-center pt-2 pb-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-            >
-              <div className="mb-1">
-                <Camera className="w-5 h-5" />
-              </div>
-              <span className="text-xs">Snap</span>
-            </Link>
           </div>
         </div>
       </div>

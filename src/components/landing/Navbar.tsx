@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,16 @@ const Navbar = () => {
     };
   }, []);
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      window.scrollTo({
+        top: element.offsetTop - 80, // Offset for the navbar height
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
     <MotionDiv
       className={cn(
@@ -38,18 +47,30 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex space-x-8 items-center">
-          <Link to="/#features" className="font-medium text-foreground/80 hover:text-fitness-primary transition-colors">
+          <button 
+            onClick={() => scrollToSection("features")} 
+            className="font-medium text-foreground/80 hover:text-fitness-primary transition-colors"
+          >
             Features
-          </Link>
-          <Link to="/#plans" className="font-medium text-foreground/80 hover:text-fitness-primary transition-colors">
+          </button>
+          <button 
+            onClick={() => scrollToSection("plans")} 
+            className="font-medium text-foreground/80 hover:text-fitness-primary transition-colors"
+          >
             Plans
-          </Link>
-          <Link to="/#testimonials" className="font-medium text-foreground/80 hover:text-fitness-primary transition-colors">
+          </button>
+          <button 
+            onClick={() => scrollToSection("testimonials")} 
+            className="font-medium text-foreground/80 hover:text-fitness-primary transition-colors"
+          >
             Testimonials
-          </Link>
-          <Link to="/#faq" className="font-medium text-foreground/80 hover:text-fitness-primary transition-colors">
+          </button>
+          <button 
+            onClick={() => scrollToSection("faq")} 
+            className="font-medium text-foreground/80 hover:text-fitness-primary transition-colors"
+          >
             FAQ
-          </Link>
+          </button>
         </div>
 
         <div className="flex items-center gap-4">

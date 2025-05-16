@@ -7,12 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dumbbell, Clock, Heart } from "lucide-react";
+import { useEffect } from "react";
 
 const activitySchema = z.object({
-  activityStatus: z.enum(["student", "professional", "other"]),
-  workingHours: z.string(),
-  workoutDuration: z.string(),
-  workoutIntensity: z.coerce.number().min(1).max(5),
+  activityStatus: z.enum(["student", "professional", "other"], {
+    required_error: "Please select your current status",
+    invalid_type_error: "Please select a valid option",
+  }).optional(),
+  workingHours: z.string().optional(),
+  workoutDuration: z.string().optional(),
+  workoutIntensity: z.coerce.number().min(1).max(5).optional(),
 });
 
 type ActivityFormValues = z.infer<typeof activitySchema>;
@@ -43,13 +47,31 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
   // Watch form values to update parent component
   const formValues = watch();
   
+  // Set initial data on component mount
+  useEffect(() => {
+    // Always pass default values to parent component
+    const defaultData = {
+      activityStatus: "professional",
+      workingHours: "8",
+      workoutDuration: "30-60",
+      workoutIntensity: 3,
+      ...defaultValues
+    };
+    onDataChange(defaultData);
+  }, []);
+  
   // Update parent component when form values change
   const handleFormChange = () => {
-    // Check if all required fields are filled
-    if (formValues.activityStatus && formValues.workingHours && 
-        formValues.workoutDuration && formValues.workoutIntensity) {
-      onDataChange(formValues);
-    }
+    // Always update with current values, regardless of validation
+    const updatedValues = {
+      ...formValues,
+      // Ensure we always have default values set
+      activityStatus: formValues.activityStatus || "professional",
+      workingHours: formValues.workingHours || "8",
+      workoutDuration: formValues.workoutDuration || "30-60",
+      workoutIntensity: formValues.workoutIntensity || 3
+    };
+    onDataChange(updatedValues);
   };
 
   return (
@@ -57,6 +79,7 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold mb-2">Your Activity Profile</h2>
         <p className="text-muted-foreground">Help us understand your daily activity level</p>
+        <p className="text-sm text-muted-foreground mt-2">(All fields are optional - default values will be used if skipped)</p>
       </div>
 
       <div className="space-y-6">
@@ -71,24 +94,24 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
                   field.onChange(value);
                   handleFormChange();
                 }}
-                defaultValue={field.value}
+                value={field.value}
                 className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2"
               >
-                <div className="flex items-center space-x-2 border rounded-lg p-4 hover:border-fitness-primary cursor-pointer">
+                <div className={`flex items-center space-x-2 border rounded-lg p-4 hover:border-fitness-primary cursor-pointer ${field.value === 'student' ? 'border-fitness-primary bg-fitness-primary/10' : ''}`}>
                   <RadioGroupItem value="student" id="student" />
                   <Label htmlFor="student" className="cursor-pointer flex flex-col">
                     <span>Student</span>
                     <span className="text-sm text-muted-foreground">College/University</span>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2 border rounded-lg p-4 hover:border-fitness-primary cursor-pointer">
+                <div className={`flex items-center space-x-2 border rounded-lg p-4 hover:border-fitness-primary cursor-pointer ${field.value === 'professional' ? 'border-fitness-primary bg-fitness-primary/10' : ''}`}>
                   <RadioGroupItem value="professional" id="professional" />
                   <Label htmlFor="professional" className="cursor-pointer flex flex-col">
                     <span>Professional</span>
                     <span className="text-sm text-muted-foreground">Working full/part time</span>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2 border rounded-lg p-4 hover:border-fitness-primary cursor-pointer">
+                <div className={`flex items-center space-x-2 border rounded-lg p-4 hover:border-fitness-primary cursor-pointer ${field.value === 'other' ? 'border-fitness-primary bg-fitness-primary/10' : ''}`}>
                   <RadioGroupItem value="other" id="other" />
                   <Label htmlFor="other" className="cursor-pointer flex flex-col">
                     <span>Other</span>
@@ -99,7 +122,7 @@ const ActivityStep = ({ onDataChange, defaultValues }: ActivityStepProps) => {
             )}
           />
           {errors.activityStatus && (
-            <p className="text-sm text-red-500">{errors.activityStatus.message}</p>
+            <p className="text-sm text-red-500">{errors.activityStatus.message || "Please select your current status"}</p>
           )}
         </div>
 

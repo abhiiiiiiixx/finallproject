@@ -1,15 +1,20 @@
-
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 
 const dietSchema = z.object({
-  dietPreference: z.enum(["vegetarian", "non-vegetarian", "semi-vegetarian"]),
-  healthGoal: z.enum(["weight-loss", "weight-gain", "maintenance"]),
-  sleepPattern: z.enum(["less-than-6", "6-to-8", "more-than-8"]),
+  age: z.number().min(5, "Age must be at least 5 years").optional(),
+  height: z.number().min(1, "Height is required").optional(),
+  weight: z.number().min(1, "Weight is required").optional(),
+  dietPreference: z.enum(["vegetarian", "non-vegetarian", "semi-vegetarian"]).optional(),
+  healthGoal: z.enum(["weight-loss", "weight-gain", "maintenance"]).optional(),
+  sleepPattern: z.enum(["less-than-6", "6-to-8", "more-than-8"]).optional(),
   medicalConditions: z.array(z.string()).optional(),
 });
 
@@ -22,25 +27,29 @@ interface DietGoalsStepProps {
 
 const medicalConditionOptions = [
   { id: "diabetes", label: "Diabetes" },
-  { id: "hypertension", label: "Hypertension" },
   { id: "heart-disease", label: "Heart Disease" },
   { id: "cholesterol", label: "High Cholesterol" },
-  { id: "thyroid", label: "Thyroid Issues" },
-  { id: "pcos", label: "PCOS" },
   { id: "ibs", label: "IBS/Digestive Issues" },
   { id: "none", label: "None of the above" },
 ];
 
 const DietGoalsStep = ({ onDataChange, defaultValues }: DietGoalsStepProps) => {
+  const [bmi, setBmi] = useState<number | null>(null);
+  const [bmiCategory, setBmiCategory] = useState<string>("");
+
   const {
     control,
     formState: { errors },
     watch,
     setValue,
     getValues,
+    register,
   } = useForm<DietFormValues>({
     resolver: zodResolver(dietSchema),
     defaultValues: {
+      age: defaultValues?.age || undefined,
+      height: defaultValues?.height || undefined,
+      weight: defaultValues?.weight || undefined,
       dietPreference: defaultValues?.dietPreference || "non-vegetarian",
       healthGoal: defaultValues?.healthGoal || "weight-loss",
       sleepPattern: defaultValues?.sleepPattern || "6-to-8",
@@ -48,16 +57,76 @@ const DietGoalsStep = ({ onDataChange, defaultValues }: DietGoalsStepProps) => {
     },
   });
 
+  // Watch height and weight for BMI calculation
+  const height = watch("height");
+  const weight = watch("weight");
+
+  // Calculate BMI when height or weight changes
+  useEffect(() => {
+    console.log("Height:", height, "Weight:", weight); // Debug log
+    
+    // Ensure we have valid numeric values
+    if (
+      height && 
+      weight && 
+      !isNaN(height) && 
+      !isNaN(weight) && 
+      height > 0 && 
+      weight > 0
+    ) {
+      // BMI formula: weight(kg) / (height(m) * height(m))
+      // Assuming height is in cm, convert to meters
+      const heightInMeters = height / 100;
+      const bmiValue = weight / (heightInMeters * heightInMeters);
+      const roundedBmi = parseFloat(bmiValue.toFixed(1));
+      console.log("Calculated BMI:", roundedBmi); // Debug log
+      setBmi(roundedBmi);
+      
+      // Determine BMI category
+      if (bmiValue < 18.5) {
+        setBmiCategory("Underweight");
+      } else if (bmiValue >= 18.5 && bmiValue < 25) {
+        setBmiCategory("Normal");
+      } else if (bmiValue >= 25 && bmiValue < 30) {
+        setBmiCategory("Overweight");
+      } else {
+        setBmiCategory("Obese");
+      }
+    } else {
+      setBmi(null);
+      setBmiCategory("");
+    }
+  }, [height, weight]);
+
   // Watch form values to update parent component
   const formValues = watch();
   
   // Update parent component when form values change
   const handleFormChange = () => {
-    const isValid = !errors.dietPreference && !errors.healthGoal && !errors.sleepPattern;
-    if (isValid) {
-      onDataChange(formValues);
-    }
+    // Always set default values for required fields
+    const updatedValues = {
+      ...formValues,
+      dietPreference: formValues.dietPreference || "non-vegetarian",
+      healthGoal: formValues.healthGoal || "weight-loss",
+      sleepPattern: formValues.sleepPattern || "6-to-8"
+    };
+    
+    // Send the updated values to the parent component
+    onDataChange(updatedValues);
   };
+
+  // Set initial data on component mount
+  useEffect(() => {
+    // Always pass default values to parent component
+    const defaultData = {
+      dietPreference: "non-vegetarian",
+      healthGoal: "weight-loss",
+      sleepPattern: "6-to-8",
+      medicalConditions: [],
+      ...defaultValues
+    };
+    onDataChange(defaultData);
+  }, []);
 
   const handleCheckboxChange = (id: string, checked: boolean) => {
     const currentValues = getValues("medicalConditions") || [];
@@ -82,85 +151,164 @@ const DietGoalsStep = ({ onDataChange, defaultValues }: DietGoalsStepProps) => {
     setTimeout(handleFormChange, 0);
   };
 
+  // Add a function to explicitly calculate BMI
+  const calculateBMI = () => {
+    if (height && weight && !isNaN(height) && !isNaN(weight) && height > 0 && weight > 0) {
+      const heightInMeters = height / 100;
+      const bmiValue = weight / (heightInMeters * heightInMeters);
+      const roundedBmi = parseFloat(bmiValue.toFixed(1));
+      setBmi(roundedBmi);
+      
+      // Determine BMI category
+      if (bmiValue < 18.5) {
+        setBmiCategory("Underweight");
+      } else if (bmiValue >= 18.5 && bmiValue < 25) {
+        setBmiCategory("Normal");
+      } else if (bmiValue >= 25 && bmiValue < 30) {
+        setBmiCategory("Overweight");
+      } else {
+        setBmiCategory("Obese");
+      }
+    }
+  };
+
   return (
     <div onChange={handleFormChange} className="space-y-8">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold mb-2">Your Diet & Health Goals</h2>
-        <p className="text-muted-foreground">Let's customize your plan according to your preferences</p>
+        <h2 className="text-2xl font-bold mb-2">Your Health Information</h2>
+        <p className="text-muted-foreground">Let's gather some basic health details to customize your plan</p>
+        <p className="text-sm text-muted-foreground mt-2">(All fields are optional - default values will be used for any skipped sections)</p>
       </div>
 
       <div className="space-y-8">
         <div className="space-y-4">
-          <Label className="text-lg font-medium">What's your diet preference?</Label>
-          <Controller
-            name="dietPreference"
-            control={control}
-            render={({ field }) => (
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          <Label className="text-lg font-medium">Your Basic Information</Label>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="age">Age (minimum 5 years)</Label>
+              <Input
+                id="age"
+                type="number"
+                min="5"
+                placeholder="Enter your age (5+ years)"
+                {...register("age", { 
+                  valueAsNumber: true,
+                  onChange: (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val >= 5) {
+                      setValue("age", val, { shouldValidate: true });
+                      handleFormChange();
+                    }
+                  }
+                })}
+              />
+              {errors.age && (
+                <p className="text-sm text-red-500">{errors.age.message}</p>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="height">Height (cm)</Label>
+                <Input
+                  id="height"
+                  type="number"
+                  min="1"
+                  placeholder="Enter your height in cm"
+                  {...register("height", { 
+                    valueAsNumber: true,
+                    onChange: (e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val) && val > 0) {
+                        setValue("height", val, { shouldValidate: true });
+                        handleFormChange();
+                      }
+                    }
+                  })}
+                />
+                {errors.height && (
+                  <p className="text-sm text-red-500">{errors.height.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="weight">Weight (kg)</Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  min="1"
+                  placeholder="Enter your weight in kg"
+                  {...register("weight", { 
+                    valueAsNumber: true,
+                    onChange: (e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val) && val > 0) {
+                        setValue("weight", val, { shouldValidate: true });
+                        handleFormChange();
+                      }
+                    }
+                  })}
+                />
+                {errors.weight && (
+                  <p className="text-sm text-red-500">{errors.weight.message}</p>
+                )}
+              </div>
+            </div>
+            
+            <button
+              type="button"
+              onClick={calculateBMI}
+              className="mt-2 py-2 px-4 bg-fitness-primary text-white rounded-md hover:bg-fitness-primary/90 transition"
+            >
+              Calculate BMI
+            </button>
+          </div>
+          
+          {bmi && (
+            <motion.div 
+              className="mt-4 p-4 rounded-lg bg-fitness-primary/10 border border-fitness-primary"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium">Your BMI</h3>
+                  <p className="text-sm text-muted-foreground">Body Mass Index</p>
+                </div>
+                <div className="text-right">
+                  <motion.span 
+                    className="text-2xl font-bold text-fitness-primary"
+                    initial={{ scale: 0.5 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                  >
+                    {bmi}
+                  </motion.span>
+                  <p className="text-sm font-medium">{bmiCategory}</p>
+                </div>
+              </div>
+              <motion.div 
+                className="mt-3 w-full h-2 bg-gray-200 rounded-full overflow-hidden"
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 0.5 }}
               >
-                <div className="flex flex-col items-center justify-center border rounded-xl p-5 hover:border-fitness-primary cursor-pointer">
-                  <div className="text-2xl mb-2">🥦</div>
-                  <RadioGroupItem value="vegetarian" id="vegetarian" className="sr-only" />
-                  <Label htmlFor="vegetarian" className="cursor-pointer font-medium">Vegetarian</Label>
-                  <p className="text-xs text-muted-foreground text-center mt-1">No meat, fish, or animal products</p>
-                </div>
-                <div className="flex flex-col items-center justify-center border rounded-xl p-5 hover:border-fitness-primary cursor-pointer">
-                  <div className="text-2xl mb-2">🍗</div>
-                  <RadioGroupItem value="non-vegetarian" id="non-vegetarian" className="sr-only" />
-                  <Label htmlFor="non-vegetarian" className="cursor-pointer font-medium">Non-Vegetarian</Label>
-                  <p className="text-xs text-muted-foreground text-center mt-1">Include all types of food</p>
-                </div>
-                <div className="flex flex-col items-center justify-center border rounded-xl p-5 hover:border-fitness-primary cursor-pointer">
-                  <div className="text-2xl mb-2">🥗</div>
-                  <RadioGroupItem value="semi-vegetarian" id="semi-vegetarian" className="sr-only" />
-                  <Label htmlFor="semi-vegetarian" className="cursor-pointer font-medium">Semi-Vegetarian</Label>
-                  <p className="text-xs text-muted-foreground text-center mt-1">Mostly plant-based with some animal products</p>
-                </div>
-              </RadioGroup>
-            )}
-          />
-          {errors.dietPreference && (
-            <p className="text-sm text-red-500">{errors.dietPreference.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <Label className="text-lg font-medium">What's your primary health goal?</Label>
-          <Controller
-            name="healthGoal"
-            control={control}
-            render={({ field }) => (
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="grid grid-cols-1 md:grid-cols-3 gap-4"
-              >
-                <div className="flex flex-col items-center justify-center border rounded-xl p-5 hover:border-fitness-primary cursor-pointer">
-                  <div className="text-2xl mb-2">⬇️</div>
-                  <RadioGroupItem value="weight-loss" id="weight-loss" className="sr-only" />
-                  <Label htmlFor="weight-loss" className="cursor-pointer font-medium">Weight Loss</Label>
-                  <p className="text-xs text-muted-foreground text-center mt-1">Reduce body fat and weight</p>
-                </div>
-                <div className="flex flex-col items-center justify-center border rounded-xl p-5 hover:border-fitness-primary cursor-pointer">
-                  <div className="text-2xl mb-2">⬆️</div>
-                  <RadioGroupItem value="weight-gain" id="weight-gain" className="sr-only" />
-                  <Label htmlFor="weight-gain" className="cursor-pointer font-medium">Weight Gain</Label>
-                  <p className="text-xs text-muted-foreground text-center mt-1">Build muscle and increase weight</p>
-                </div>
-                <div className="flex flex-col items-center justify-center border rounded-xl p-5 hover:border-fitness-primary cursor-pointer">
-                  <div className="text-2xl mb-2">⚖️</div>
-                  <RadioGroupItem value="maintenance" id="maintenance" className="sr-only" />
-                  <Label htmlFor="maintenance" className="cursor-pointer font-medium">Maintenance</Label>
-                  <p className="text-xs text-muted-foreground text-center mt-1">Maintain current weight and improve health</p>
-                </div>
-              </RadioGroup>
-            )}
-          />
-          {errors.healthGoal && (
-            <p className="text-sm text-red-500">{errors.healthGoal.message}</p>
+                <motion.div 
+                  className="h-full rounded-full"
+                  style={{ 
+                    width: `${Math.min(bmi * 2, 100)}%`,
+                    backgroundColor: 
+                      bmiCategory === "Underweight" ? "#3b82f6" :
+                      bmiCategory === "Normal" ? "#10b981" :
+                      bmiCategory === "Overweight" ? "#f59e0b" : "#ef4444"
+                  }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(bmi * 2, 100)}%` }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                />
+              </motion.div>
+            </motion.div>
           )}
         </div>
 
@@ -172,7 +320,7 @@ const DietGoalsStep = ({ onDataChange, defaultValues }: DietGoalsStepProps) => {
             render={({ field }) => (
               <RadioGroup
                 onValueChange={field.onChange}
-                defaultValue={field.value}
+                value={field.value}
                 className="grid grid-cols-1 md:grid-cols-3 gap-4"
               >
                 <div className="flex items-center space-x-2 border rounded-lg p-4 hover:border-fitness-primary cursor-pointer">

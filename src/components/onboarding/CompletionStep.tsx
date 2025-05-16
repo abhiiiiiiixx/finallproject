@@ -1,8 +1,16 @@
-
 import { motion } from "framer-motion";
 import { CheckCircleIcon } from "lucide-react";
 
 const CompletionStep = ({ userData }: { userData: any }) => {
+  // For debugging - output structured data
+  console.log("User data in completion step:", {
+    personalInfo: userData.personalInfo,
+    personalInfo_fullName: userData.personalInfo?.fullName,
+    personalInfo_gender: userData.personalInfo?.gender,
+    dietGoals_age: userData.dietGoals?.age,
+    dietGoals_preference: userData.dietGoals?.dietPreference
+  });
+  
   return (
     <div className="flex flex-col items-center justify-center py-8">
       <motion.div
@@ -46,15 +54,27 @@ const CompletionStep = ({ userData }: { userData: any }) => {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Age:</span>
-            <span className="font-medium">{userData.personalInfo?.age || "Not provided"} years</span>
+            <span className="font-medium">{userData.dietGoals?.age || "Not provided"} {userData.dietGoals?.age ? "years" : ""}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Diet Preference:</span>
-            <span className="font-medium capitalize">{userData.dietGoals?.dietPreference.replace("-", " ") || "Not provided"}</span>
+            <span className="text-muted-foreground">Gender:</span>
+            <span className="font-medium capitalize">{userData.personalInfo?.gender || "Not provided"}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Health Goal:</span>
-            <span className="font-medium capitalize">{userData.dietGoals?.healthGoal.replace("-", " ") || "Not provided"}</span>
+            <span className="text-muted-foreground">Height:</span>
+            <span className="font-medium">{userData.dietGoals?.height || "Not provided"} {userData.dietGoals?.height ? "cm" : ""}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Weight:</span>
+            <span className="font-medium">{userData.dietGoals?.weight || "Not provided"} {userData.dietGoals?.weight ? "kg" : ""}</span>
+          </div>
+          <div className="flex justify-between">
+            {/* <span className="text-muted-foreground">Diet Preference:</span> */}
+            {/* <span className="font-medium capitalize">{userData.dietGoals?.dietPreference?.replace("-", " ") || "Not provided"}</span> */}
+          </div>
+          <div className="flex justify-between">
+            {/* <span className="text-muted-foreground">Health Goal:</span> */}
+            {/* <span className="font-medium capitalize">{userData.dietGoals?.healthGoal?.replace("-", " ") || "Not provided"}</span> */}
           </div>
         </div>
       </motion.div>
