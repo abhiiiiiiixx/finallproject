@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCcwIcon, Share2, Download, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { FoodItem, getRandomFoodItems } from "@/lib/foodDatabase";
+import { FoodItem, getRandomFoodItems } from "../../lib/foodDatabase";
 import { useDietPreference } from "@/lib/DietPreferenceContext";
 import { useTokens } from "@/lib/TokenContext";
 
@@ -160,21 +160,19 @@ const DietPlanGenerator = () => {
     if (!weeklyPlan || !weeklyPlan[day]) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
     
     const meals = Object.values(weeklyPlan[day]);
-    return meals.reduce(
-      (acc, meal) => {
-        return {
-          calories: acc.calories + meal.calories,
-          protein: acc.protein + meal.protein,
-          carbs: acc.carbs + meal.carbs,
-          fat: acc.fat + meal.fat,
-        };
-      },
-      { calories: 0, protein: 0, carbs: 0, fat: 0 }
-    );
+    return meals.reduce((acc, meal) => {
+      return {
+        calories: acc.calories + (meal.calories || 0),
+        protein: acc.protein + (meal.protein || 0),
+        carbs: acc.carbs + (meal.carbs || 0),
+        fat: acc.fat + (meal.fat || 0)
+      };
+    }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
   };
 
   const MealCard = ({ meal, title, day }: { meal: MealOption; title: string; day: string }) => {
-    const mealType = title.toLowerCase().replace(' ', '');
+    // Normalize meal type to match what the TokenContext expects
+    const mealType = title.toLowerCase().replace(/\s+/g, '');
     const isCompleted = isMealCompleted(day, mealType);
     
     return (
@@ -213,7 +211,10 @@ const DietPlanGenerator = () => {
               size="sm"
               variant="outline" 
               className="w-full bg-green-500 hover:bg-green-600 text-white"
-              onClick={() => handleMarkMealAsCompleted(day, mealType)}
+              onClick={() => {
+                console.log(`Completing meal: ${day} - ${title} (${mealType})`);
+                handleMarkMealAsCompleted(day, mealType);
+              }}
             >
               <CheckCircle className="h-3 w-3 mr-1" />
               Complete
@@ -300,7 +301,10 @@ const DietPlanGenerator = () => {
                           <Button 
                             variant="outline" 
                             className="bg-green-500 hover:bg-green-600 text-white"
-                            onClick={() => handleMarkAsCompleted(day)}
+                            onClick={() => {
+                              console.log(`Marking day as completed: ${day}`);
+                              handleMarkAsCompleted(day);
+                            }}
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Mark All as Completed

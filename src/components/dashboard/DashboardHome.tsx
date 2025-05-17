@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { CalendarIcon, ArrowRightIcon, UtensilsIcon, UserIcon, TrophyIcon, Flame } from "lucide-react";
+import { CalendarIcon, ArrowRightIcon, UtensilsIcon, UserIcon, Coins } from "lucide-react";
 import { Link } from "react-router-dom";
 import { 
   Card, 
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/components/ui/use-toast";
 import { useDietPreference } from "@/lib/DietPreferenceContext";
-import { useTokens } from "@/lib/TokenContext";
+import WeightTrackingGraph from "./WeightTrackingGraph";
 
 const DashboardHome = () => {
   const { 
@@ -22,19 +22,10 @@ const DashboardHome = () => {
     setHealthGoal 
   } = useDietPreference();
   
-  const { tokens, streak, completedDays, completedMeals } = useTokens();
-  
   // Use memoized formatted date for better performance
   const currentDate = useMemo(() => {
     return new Date().toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' });
   }, []);
-
-  // Calculate completed meal stats
-  const mealStats = useMemo(() => {
-    const totalMeals = Object.keys(completedMeals).length;
-    const totalDays = Object.keys(completedDays).length;
-    return { totalMeals, totalDays };
-  }, [completedMeals, completedDays]);
 
   const handlePreferenceChange = (preference: 'vegetarian' | 'non-vegetarian' | 'semi-vegetarian') => {
     setDietPreference(preference);
@@ -62,7 +53,13 @@ const DashboardHome = () => {
             <span>{currentDate}</span>
           </div>
         </div>
-        <div className="mt-4 md:mt-0">
+        <div className="mt-4 md:mt-0 flex gap-3">
+          <Button asChild variant="outline">
+            <Link to="/tokens">
+              Tokens & Rewards
+              <Coins className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
           <Button asChild>
             <Link to="/diet-plan">
               View Full Diet Plan
@@ -71,51 +68,6 @@ const DashboardHome = () => {
           </Button>
         </div>
       </div>
-
-      {/* Streak and Tokens Card */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="text-lg">Your Progress</CardTitle>
-          <CardDescription>Track your diet plan achievements</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex items-center p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
-              <div className="bg-amber-500/20 p-4 rounded-full mr-4">
-                <TrophyIcon className="h-8 w-8 text-amber-500" />
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Total Tokens Earned</div>
-                <div className="text-3xl font-bold">{tokens}</div>
-                <div className="flex flex-col text-sm text-muted-foreground mt-1">
-                  <span>{mealStats.totalMeals} meals completed ({(mealStats.totalMeals * 0.1).toFixed(1)} tokens)</span>
-                  <span>{mealStats.totalDays} full days completed ({mealStats.totalDays} tokens)</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center p-4 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
-              <div className="bg-orange-500/20 p-4 rounded-full mr-4">
-                <Flame className="h-8 w-8 text-orange-500" />
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Current Streak</div>
-                <div className="text-3xl font-bold">{streak} {streak === 1 ? 'day' : 'days'}</div>
-                <div className="text-sm text-muted-foreground mt-1">Keep going to extend your streak!</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-            <h3 className="font-semibold mb-2">Token System</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
-              <li>Earn 0.1 tokens for each individual meal you complete</li>
-              <li>Earn 1 token for marking a full day as completed</li>
-              <li>Build your streak by completing consecutive days</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <Card>
@@ -272,32 +224,7 @@ const DashboardHome = () => {
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-            <CardDescription>Common tasks</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" asChild>
-                <Link to="/diet-plan">
-                  <UtensilsIcon className="mr-2 h-4 w-4" />
-                  View Diet Plan
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start" asChild>
-                <Link to="/profile">
-                  <UserIcon className="mr-2 h-4 w-4" />
-                  Update Profile
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                Schedule Workout
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <WeightTrackingGraph />
       </div>
     </div>
   );

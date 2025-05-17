@@ -5,12 +5,13 @@ import {
   UserIcon,
   UtensilsIcon,
   LogOutIcon,
-  Settings
+  Settings,
+  Coins
 } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  activeTab: "home" | "diet" | "profile";
+  activeTab: "home" | "diet" | "profile" | "tokens";
 }
 
 const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
@@ -19,6 +20,7 @@ const DashboardLayout = ({ children, activeTab }: DashboardLayoutProps) => {
   const navigationItems = [
     { name: "Home", icon: <HomeIcon className="w-5 h-5" />, href: "/dashboard", id: "home" },
     { name: "Diet Plan", icon: <UtensilsIcon className="w-5 h-5" />, href: "/diet-plan", id: "diet" },
+    { name: "Tokens & Rewards", icon: <Coins className="w-5 h-5" />, href: "/tokens", id: "tokens" },
   ];
 
   const handleNavigation = (path: string) => (e: React.MouseEvent) => {

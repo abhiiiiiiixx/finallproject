@@ -9,6 +9,7 @@ interface CompletedDay {
 
 interface TokenContextType {
   tokens: number;
+  setTokens: (tokens: number) => void;
   streak: number;
   completedDays: Record<string, boolean>;
   completedMeals: Record<string, boolean>;
@@ -21,6 +22,7 @@ interface TokenContextType {
 const TokenContext = createContext<TokenContextType | undefined>(undefined);
 
 // Helper to generate current week key (e.g., "2023-W30")
+// This function is critical for consistency - don't modify without updating all references
 const getCurrentWeekKey = () => {
   const now = new Date();
   const year = now.getFullYear();
@@ -35,6 +37,7 @@ const checkApiAvailability = async () => {
     await axios.get('/api/tokens');
     return true;
   } catch (error) {
+    console.log('API not available, using localStorage');
     return false;
   }
 };
@@ -47,6 +50,11 @@ export function TokenProvider({ children }: { children: ReactNode }) {
   const [isShowingTokenAnimation, setIsShowingTokenAnimation] = useState(false);
   const [animationTokenAmount, setAnimationTokenAmount] = useState(0.1);
   const [useApi, setUseApi] = useState<boolean | null>(null);
+  
+  // For debugging - remove in production
+  useEffect(() => {
+    console.log('Current tokens state:', { tokens, streak, completedDays, completedMeals });
+  }, [tokens, streak, completedDays, completedMeals]);
   
   // Check if API is available
   useEffect(() => {
@@ -84,23 +92,48 @@ export function TokenProvider({ children }: { children: ReactNode }) {
   
   // Load from localStorage as fallback
   const loadFromLocalStorage = () => {
-    const savedTokens = localStorage.getItem('fitness-tokens');
-    const savedStreak = localStorage.getItem('fitness-streak');
-    const savedCompletedDays = localStorage.getItem('fitness-completed-days');
-    const savedCompletedMeals = localStorage.getItem('fitness-completed-meals');
-    
-    if (savedTokens) setTokens(parseFloat(savedTokens));
-    if (savedStreak) setStreak(parseInt(savedStreak));
-    if (savedCompletedDays) setCompletedDays(JSON.parse(savedCompletedDays));
-    if (savedCompletedMeals) setCompletedMeals(JSON.parse(savedCompletedMeals));
+    try {
+      const savedTokens = localStorage.getItem('fitness-tokens');
+      const savedStreak = localStorage.getItem('fitness-streak');
+      const savedCompletedDays = localStorage.getItem('fitness-completed-days');
+      const savedCompletedMeals = localStorage.getItem('fitness-completed-meals');
+      
+      console.log('Loading from localStorage:', { 
+        savedTokens, 
+        savedStreak, 
+        hasCompletedDays: !!savedCompletedDays,
+        hasCompletedMeals: !!savedCompletedMeals
+      });
+      
+      if (savedTokens) setTokens(parseFloat(savedTokens));
+      if (savedStreak) setStreak(parseInt(savedStreak));
+      if (savedCompletedDays) setCompletedDays(JSON.parse(savedCompletedDays));
+      if (savedCompletedMeals) setCompletedMeals(JSON.parse(savedCompletedMeals));
+    } catch (error) {
+      console.error("Error loading from localStorage:", error);
+    }
+  };
+  
+  // Custom setter for tokens that also updates localStorage
+  const updateTokens = (newTokens: number) => {
+    setTokens(newTokens);
+    localStorage.setItem('fitness-tokens', newTokens.toString());
+    console.log('Updated tokens:', newTokens);
   };
   
   const markMealAsCompleted = (day: string, mealType: string) => {
+    // Normalize day name to ensure consistency
+    const normalizedDay = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
+    const normalizedMealType = mealType.toLowerCase();
+    
+    console.log(`Marking meal as completed: ${normalizedDay} - ${normalizedMealType}`);
+    
     const weekKey = getCurrentWeekKey();
-    const mealKey = `${weekKey}-${day}-${mealType}`;
+    const mealKey = `${weekKey}-${normalizedDay}-${normalizedMealType}`;
     
     // Check if the meal is already completed
     if (completedMeals[mealKey]) {
+      console.log('Meal already completed:', mealKey);
       return;
     }
     
@@ -116,8 +149,8 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     // Check if all meals for this day are completed
     const mealTypes = ['breakfast', 'morningSnack', 'lunch', 'afternoonSnack', 'dinner'];
     const allMealsCompleted = mealTypes.every(meal => {
-      const key = `${weekKey}-${day}-${meal}`;
-      return meal === mealType || updatedCompletedMeals[key];
+      const key = `${weekKey}-${normalizedDay}-${meal}`;
+      return meal === normalizedMealType || updatedCompletedMeals[key];
     });
     
     // Update completed days if all meals are completed
@@ -125,12 +158,12 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     let newStreak = streak;
     
     if (allMealsCompleted) {
-      const dayKey = `${weekKey}-${day}`;
+      const dayKey = `${weekKey}-${normalizedDay}`;
       updatedCompletedDays[dayKey] = true;
       
       // If we completed a consecutive day, increase streak
       const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      const dayIndex = daysOfWeek.indexOf(day);
+      const dayIndex = daysOfWeek.indexOf(normalizedDay);
       
       if (dayIndex > 0) {
         const previousDay = daysOfWeek[dayIndex - 1];
@@ -154,10 +187,9 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     }
     
     // Save to state and localStorage
-    setTokens(newTokens);
+    updateTokens(newTokens);
     setCompletedMeals(updatedCompletedMeals);
     
-    localStorage.setItem('fitness-tokens', newTokens.toString());
     localStorage.setItem('fitness-completed-meals', JSON.stringify(updatedCompletedMeals));
     
     // Show token animation
@@ -167,11 +199,17 @@ export function TokenProvider({ children }: { children: ReactNode }) {
   };
   
   const markDayAsCompleted = (day: string) => {
+    // Normalize day name to ensure consistency
+    const normalizedDay = day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
+    
+    console.log(`Marking day as completed: ${normalizedDay}`);
+    
     const weekKey = getCurrentWeekKey();
-    const dayKey = `${weekKey}-${day}`;
+    const dayKey = `${weekKey}-${normalizedDay}`;
     
     // Check if the day is already completed
     if (completedDays[dayKey]) {
+      console.log('Day already completed:', dayKey);
       return;
     }
     
@@ -189,7 +227,7 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     
     // If we completed a consecutive day, increase streak
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    const dayIndex = daysOfWeek.indexOf(day);
+    const dayIndex = daysOfWeek.indexOf(normalizedDay);
     
     if (dayIndex > 0) {
       const previousDay = daysOfWeek[dayIndex - 1];
@@ -211,17 +249,23 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     const updatedCompletedMeals = {...completedMeals};
     
     mealTypes.forEach(mealType => {
-      const mealKey = `${weekKey}-${day}-${mealType}`;
+      const mealKey = `${weekKey}-${normalizedDay}-${mealType}`;
       updatedCompletedMeals[mealKey] = true;
     });
     
+    console.log('Updating after day completion:', {
+      newTokens,
+      newStreak,
+      updatedCompletedDays,
+      updatedCompletedMeals
+    });
+    
     // Save to state and localStorage
-    setTokens(newTokens);
+    updateTokens(newTokens);
     setStreak(newStreak);
     setCompletedDays(updatedCompletedDays);
     setCompletedMeals(updatedCompletedMeals);
     
-    localStorage.setItem('fitness-tokens', newTokens.toString());
     localStorage.setItem('fitness-streak', newStreak.toString());
     localStorage.setItem('fitness-completed-days', JSON.stringify(updatedCompletedDays));
     localStorage.setItem('fitness-completed-meals', JSON.stringify(updatedCompletedMeals));
@@ -236,6 +280,7 @@ export function TokenProvider({ children }: { children: ReactNode }) {
     <TokenContext.Provider
       value={{
         tokens,
+        setTokens: updateTokens,
         streak,
         completedDays,
         completedMeals,
