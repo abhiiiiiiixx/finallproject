@@ -3,7 +3,7 @@
 A powerful and customizable nutrition-focused app that helps users find curated meal plans for various goals — **weight loss, weight gain, maintenance** — and dietary preferences including **vegetarian, non-vegetarian, diabetic-friendly**, and more.
 
 ---
-project - https://finallproject-rho.vercel.app/
+
 
 
 
